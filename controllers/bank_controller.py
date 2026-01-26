@@ -1,5 +1,4 @@
 """
-controllers/bank_controller.py - Controlador con Persistencia SQLite
 Versión mejorada que guarda todo en base de datos
 """
 
@@ -20,7 +19,7 @@ class BankController:
     
     def __init__(self, view, db_path="banking_system.db"):
         self.view = view
-        self.db = DatabaseManager(db_path)
+        self.db = DatabaseManager()
         self.current_user = None
         
         # Cargar datos desde la base de datos

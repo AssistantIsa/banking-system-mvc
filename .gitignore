@@ -1,25 +1,92 @@
-# Environment variables (NUNCA subir .env a Git)
-.env
-
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-venv/
-ENV/
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
+.installed.cfg
+*.egg
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
 # Docker
 *.log
+Dockerfile.bak
+docker-compose.yml.bak
 
 # IDE
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temp files
+*.tmp
+*.temp
+
+# Database
+*.db
+*.sqlite3
+
+# Docker ignore
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# Project specific
+/database/*.db
+/temp/
+/tmp/

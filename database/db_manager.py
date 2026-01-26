@@ -1,31 +1,41 @@
 """
-Persistencia de datos sin necesidad de ORMs complejos
+database/db_manager.py - PostgreSQL Database Manager
+Migration from SQLite to PostgreSQL
 """
 
-import sqlite3
-import json
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime
-from pathlib import Path
+import os
 
 class DatabaseManager:
-    """Gestiona la persistencia de datos con SQLite"""
+    """Gestiona la persistencia de datos con PostgreSQL"""
     
-    def __init__(self, db_path="banking_system.db"):
-        """Inicializa la conexión a la base de datos"""
-        self.db_path = db_path
+    def __init__(self, config=None):
+        """Inicializa la conexión a PostgreSQL"""
+        if config is None:
+            # Default configuration
+            config = {
+                'host': 'localhost',
+                'port': '5432',
+                'database': 'banking_system',
+                'user': 'banking_user',
+                'password': 'BankPass2026!'
+            }
+        
+        self.config = config
         self.connection = None
         self.cursor = None
         self._connect()
         self._create_tables()
     
     def _connect(self):
-        """Establece conexión con la base de datos"""
+        """Establece conexión con PostgreSQL"""
         try:
-            self.connection = sqlite3.connect(self.db_path)
-            self.connection.row_factory = sqlite3.Row  # Para acceder por nombre de columna
-            self.cursor = self.connection.cursor()
-            print(f"✅ Conectado a la base de datos: {self.db_path}")
-        except sqlite3.Error as e:
+            self.connection = psycopg2.connect(**self.config)
+            self.cursor = self.connection.cursor(cursor_factory=RealDictCursor)
+            print(f"✅ Conectado a PostgreSQL: {self.config['database']}")
+        except psycopg2.Error as e:
             print(f"❌ Error al conectar: {e}")
             raise
     
@@ -35,10 +45,10 @@ class DatabaseManager:
             # Tabla de Usuarios
             self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS users (
-                    user_id INTEGER PRIMARY KEY,
-                    username TEXT UNIQUE NOT NULL,
-                    password_hash TEXT NOT NULL,
-                    email TEXT UNIQUE NOT NULL,
+                    user_id SERIAL PRIMARY KEY,
+                    username VARCHAR(100) UNIQUE NOT NULL,
+                    password_hash VARCHAR(256) NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
@@ -46,31 +56,31 @@ class DatabaseManager:
             # Tabla de Cuentas
             self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS accounts (
-                    account_number INTEGER PRIMARY KEY,
+                    account_number SERIAL PRIMARY KEY,
                     owner_id INTEGER NOT NULL,
-                    account_type TEXT NOT NULL,
-                    balance REAL DEFAULT 0.0,
-                    is_active INTEGER DEFAULT 1,
+                    account_type VARCHAR(50) NOT NULL,
+                    balance DECIMAL(15, 2) DEFAULT 0.0,
+                    is_active BOOLEAN DEFAULT TRUE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (owner_id) REFERENCES users(user_id)
+                    FOREIGN KEY (owner_id) REFERENCES users(user_id) ON DELETE CASCADE
                 )
             ''')
             
             # Tabla de Transacciones
             self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS transactions (
-                    transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    transaction_id SERIAL PRIMARY KEY,
                     account_number INTEGER NOT NULL,
-                    transaction_type TEXT NOT NULL,
-                    amount REAL NOT NULL,
+                    transaction_type VARCHAR(50) NOT NULL,
+                    amount DECIMAL(15, 2) NOT NULL,
                     description TEXT,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    status TEXT DEFAULT 'completed',
-                    FOREIGN KEY (account_number) REFERENCES accounts(account_number)
+                    status VARCHAR(50) DEFAULT 'completed',
+                    FOREIGN KEY (account_number) REFERENCES accounts(account_number) ON DELETE CASCADE
                 )
             ''')
             
-            # Crear índices para mejorar performance
+            # Crear índices
             self.cursor.execute('''
                 CREATE INDEX IF NOT EXISTS idx_accounts_owner 
                 ON accounts(owner_id)
@@ -81,29 +91,36 @@ class DatabaseManager:
                 ON transactions(account_number)
             ''')
             
-            self.connection.commit()
-            print("✅ Tablas creadas correctamente")
+            self.cursor.execute('''
+                CREATE INDEX IF NOT EXISTS idx_transactions_timestamp 
+                ON transactions(timestamp DESC)
+            ''')
             
-        except sqlite3.Error as e:
+            self.connection.commit()
+            print("✅ Tablas PostgreSQL creadas correctamente")
+            
+        except psycopg2.Error as e:
             print(f"❌ Error al crear tablas: {e}")
             raise
     
-    # ==================== OPERACIONES DE USUARIOS ====================
-    
     def save_user(self, user):
-        """Guarda un usuario en la base de datos"""
+        """Guarda un usuario en PostgreSQL"""
         try:
             self.cursor.execute('''
-                INSERT INTO users (user_id, username, password_hash, email, created_at)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (user.user_id, user.username, user.password_hash, 
-                  user.email, user.created_at))
+                INSERT INTO users (username, password_hash, email, created_at)
+                VALUES (%s, %s, %s, %s)
+                RETURNING user_id
+            ''', (user.username, user.password_hash, user.email, user.created_at))
+            
+            user.user_id = self.cursor.fetchone()['user_id']
             self.connection.commit()
             return True
-        except sqlite3.IntegrityError as e:
+        except psycopg2.IntegrityError as e:
+            self.connection.rollback()
             print(f"❌ Error: Usuario ya existe - {e}")
             return False
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
+            self.connection.rollback()
             print(f"❌ Error al guardar usuario: {e}")
             return False
     
@@ -111,14 +128,11 @@ class DatabaseManager:
         """Obtiene un usuario por nombre de usuario"""
         try:
             self.cursor.execute('''
-                SELECT * FROM users WHERE username = ?
+                SELECT * FROM users WHERE username = %s
             ''', (username,))
             row = self.cursor.fetchone()
-            
-            if row:
-                return dict(row)
-            return None
-        except sqlite3.Error as e:
+            return dict(row) if row else None
+        except psycopg2.Error as e:
             print(f"❌ Error al buscar usuario: {e}")
             return None
     
@@ -126,14 +140,11 @@ class DatabaseManager:
         """Obtiene un usuario por ID"""
         try:
             self.cursor.execute('''
-                SELECT * FROM users WHERE user_id = ?
+                SELECT * FROM users WHERE user_id = %s
             ''', (user_id,))
             row = self.cursor.fetchone()
-            
-            if row:
-                return dict(row)
-            return None
-        except sqlite3.Error as e:
+            return dict(row) if row else None
+        except psycopg2.Error as e:
             print(f"❌ Error al buscar usuario: {e}")
             return None
     
@@ -143,24 +154,26 @@ class DatabaseManager:
             self.cursor.execute('SELECT * FROM users ORDER BY user_id')
             rows = self.cursor.fetchall()
             return [dict(row) for row in rows]
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             print(f"❌ Error al obtener usuarios: {e}")
             return []
     
-    # ==================== OPERACIONES DE CUENTAS ====================
-    
     def save_account(self, account):
-        """Guarda una cuenta en la base de datos"""
+        """Guarda una cuenta en PostgreSQL"""
         try:
             self.cursor.execute('''
-                INSERT INTO accounts (account_number, owner_id, account_type, 
-                                    balance, is_active, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (account.account_number, account.owner_id, account.account_type,
-                  account.balance, 1 if account.is_active else 0, account.created_at))
+                INSERT INTO accounts (owner_id, account_type, balance, 
+                                    is_active, created_at)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING account_number
+            ''', (account.owner_id, account.account_type, account.balance,
+                  account.is_active, account.created_at))
+            
+            account.account_number = self.cursor.fetchone()['account_number']
             self.connection.commit()
             return True
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
+            self.connection.rollback()
             print(f"❌ Error al guardar cuenta: {e}")
             return False
     
@@ -169,12 +182,13 @@ class DatabaseManager:
         try:
             self.cursor.execute('''
                 UPDATE accounts 
-                SET balance = ? 
-                WHERE account_number = ?
+                SET balance = %s 
+                WHERE account_number = %s
             ''', (new_balance, account_number))
             self.connection.commit()
             return True
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
+            self.connection.rollback()
             print(f"❌ Error al actualizar saldo: {e}")
             return False
     
@@ -182,14 +196,11 @@ class DatabaseManager:
         """Obtiene una cuenta por número"""
         try:
             self.cursor.execute('''
-                SELECT * FROM accounts WHERE account_number = ?
+                SELECT * FROM accounts WHERE account_number = %s
             ''', (account_number,))
             row = self.cursor.fetchone()
-            
-            if row:
-                return dict(row)
-            return None
-        except sqlite3.Error as e:
+            return dict(row) if row else None
+        except psycopg2.Error as e:
             print(f"❌ Error al buscar cuenta: {e}")
             return None
     
@@ -198,12 +209,12 @@ class DatabaseManager:
         try:
             self.cursor.execute('''
                 SELECT * FROM accounts 
-                WHERE owner_id = ? AND is_active = 1
+                WHERE owner_id = %s AND is_active = TRUE
                 ORDER BY account_number
             ''', (owner_id,))
             rows = self.cursor.fetchall()
             return [dict(row) for row in rows]
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             print(f"❌ Error al obtener cuentas: {e}")
             return []
     
@@ -213,28 +224,27 @@ class DatabaseManager:
             self.cursor.execute('SELECT * FROM accounts ORDER BY account_number')
             rows = self.cursor.fetchall()
             return [dict(row) for row in rows]
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             print(f"❌ Error al obtener cuentas: {e}")
             return []
     
-    # ==================== OPERACIONES DE TRANSACCIONES ====================
-    
     def save_transaction(self, transaction):
-        """Guarda una transacción en la base de datos"""
+        """Guarda una transacción en PostgreSQL"""
         try:
             self.cursor.execute('''
                 INSERT INTO transactions (account_number, transaction_type, 
                                         amount, description, timestamp, status)
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING transaction_id
             ''', (transaction.account_number, transaction.transaction_type,
-                  transaction.amount, transaction.description, 
+                  transaction.amount, transaction.description,
                   transaction.timestamp, transaction.status))
-            self.connection.commit()
             
-            # Obtener el ID generado
-            transaction.transaction_id = self.cursor.lastrowid
+            transaction.transaction_id = self.cursor.fetchone()['transaction_id']
+            self.connection.commit()
             return True
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
+            self.connection.rollback()
             print(f"❌ Error al guardar transacción: {e}")
             return False
     
@@ -243,7 +253,7 @@ class DatabaseManager:
         try:
             query = '''
                 SELECT * FROM transactions 
-                WHERE account_number = ? 
+                WHERE account_number = %s 
                 ORDER BY timestamp DESC
             '''
             
@@ -253,7 +263,7 @@ class DatabaseManager:
             self.cursor.execute(query, (account_number,))
             rows = self.cursor.fetchall()
             return [dict(row) for row in rows]
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             print(f"❌ Error al obtener transacciones: {e}")
             return []
     
@@ -262,84 +272,79 @@ class DatabaseManager:
         try:
             self.cursor.execute('''
                 SELECT * FROM transactions 
-                WHERE account_number = ? 
-                AND timestamp BETWEEN ? AND ?
+                WHERE account_number = %s 
+                AND timestamp BETWEEN %s AND %s
                 ORDER BY timestamp DESC
             ''', (account_number, start_date, end_date))
             rows = self.cursor.fetchall()
             return [dict(row) for row in rows]
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             print(f"❌ Error al obtener transacciones: {e}")
             return []
-    
-    # ==================== UTILIDADES ====================
     
     def get_database_stats(self):
         """Obtiene estadísticas de la base de datos"""
         try:
             stats = {}
             
-            # Total de usuarios
             self.cursor.execute('SELECT COUNT(*) FROM users')
-            stats['total_users'] = self.cursor.fetchone()[0]
+            stats['total_users'] = self.cursor.fetchone()['count']
             
-            # Total de cuentas
-            self.cursor.execute('SELECT COUNT(*) FROM accounts WHERE is_active = 1')
-            stats['total_accounts'] = self.cursor.fetchone()[0]
+            self.cursor.execute('SELECT COUNT(*) FROM accounts WHERE is_active = TRUE')
+            stats['total_accounts'] = self.cursor.fetchone()['count']
             
-            # Total de transacciones
             self.cursor.execute('SELECT COUNT(*) FROM transactions')
-            stats['total_transactions'] = self.cursor.fetchone()[0]
+            stats['total_transactions'] = self.cursor.fetchone()['count']
             
-            # Balance total en el sistema
-            self.cursor.execute('SELECT SUM(balance) FROM accounts WHERE is_active = 1')
-            result = self.cursor.fetchone()[0]
-            stats['total_balance'] = result if result else 0.0
+            self.cursor.execute('SELECT COALESCE(SUM(balance), 0) FROM accounts WHERE is_active = TRUE')
+            stats['total_balance'] = float(self.cursor.fetchone()['coalesce'])
             
             return stats
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             print(f"❌ Error al obtener estadísticas: {e}")
             return {}
     
     def backup_database(self, backup_path=None):
-        """Crea un backup de la base de datos"""
+        """Crea un backup de la base de datos usando pg_dump"""
         if not backup_path:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = f"backup_banking_{timestamp}.db"
+            backup_path = f"backup_banking_{timestamp}.sql"
         
         try:
-            backup_conn = sqlite3.connect(backup_path)
-            self.connection.backup(backup_conn)
-            backup_conn.close()
+            import subprocess
+            cmd = f"pg_dump -U {self.config['user']} -h {self.config['host']} {self.config['database']} > {backup_path}"
+            subprocess.run(cmd, shell=True, check=True)
             print(f"✅ Backup creado: {backup_path}")
             return True
-        except sqlite3.Error as e:
+        except Exception as e:
             print(f"❌ Error al crear backup: {e}")
             return False
     
     def reset_database(self):
         """⚠️ PELIGRO: Elimina todos los datos (solo para desarrollo)"""
         try:
-            self.cursor.execute('DROP TABLE IF EXISTS transactions')
-            self.cursor.execute('DROP TABLE IF EXISTS accounts')
-            self.cursor.execute('DROP TABLE IF EXISTS users')
+            self.cursor.execute('DROP TABLE IF EXISTS transactions CASCADE')
+            self.cursor.execute('DROP TABLE IF EXISTS accounts CASCADE')
+            self.cursor.execute('DROP TABLE IF EXISTS users CASCADE')
             self.connection.commit()
             self._create_tables()
             print("✅ Base de datos reseteada")
             return True
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             print(f"❌ Error al resetear base de datos: {e}")
             return False
     
     def close(self):
-        """Cierra la conexión a la base de datos"""
+        """Cierra la conexión a PostgreSQL"""
+        if self.cursor:
+            self.cursor.close()
         if self.connection:
             self.connection.commit()
             self.connection.close()
-            print("✅ Conexión a base de datos cerrada")
+            print("✅ Conexión a PostgreSQL cerrada")
     
     def __enter__(self):
-        """Soporte para context manager (with statement)"""
+        """Soporte para context manager"""
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -347,38 +352,18 @@ class DatabaseManager:
         self.close()
 
 
-# ==================== FUNCIONES DE UTILIDAD ====================
-
-def initialize_database(db_path="banking_system.db"):
-    """Inicializa la base de datos y retorna el manager"""
-    print("🔧 Inicializando base de datos...")
-    db = DatabaseManager(db_path)
-    return db
-
-
-def demo_database():
-    """Función de demostración del uso de la base de datos"""
-    print("\n" + "="*60)
-    print("  DEMO: Sistema de Base de Datos SQLite")
-    print("="*60)
-    
-    # Usar context manager para manejo automático de conexión
-    with DatabaseManager("demo_banking.db") as db:
-        # Mostrar estadísticas
-        stats = db.get_database_stats()
-        print("\n📊 Estadísticas de la Base de Datos:")
-        print(f"   Usuarios: {stats.get('total_users', 0)}")
-        print(f"   Cuentas: {stats.get('total_accounts', 0)}")
-        print(f"   Transacciones: {stats.get('total_transactions', 0)}")
-        print(f"   Balance Total: ${stats.get('total_balance', 0):.2f}")
-        
-        # Crear backup
-        print("\n💾 Creando backup...")
-        db.backup_database()
-    
-    print("\n✅ Demo completado")
-
-
 if __name__ == "__main__":
-    # Ejecutar demo
-    demo_database()
+    # Test de conexión
+    print("Probando conexión a PostgreSQL...")
+    
+    db = DatabaseManager()
+    stats = db.get_database_stats()
+    
+    print(f"\n📊 Estadísticas de la Base de Datos:")
+    print(f"   Usuarios: {stats.get('total_users', 0)}")
+    print(f"   Cuentas: {stats.get('total_accounts', 0)}")
+    print(f"   Transacciones: {stats.get('total_transactions', 0)}")
+    print(f"   Balance Total: ${stats.get('total_balance', 0):.2f}")
+    
+    db.close()
+    print("\n✅ Test completado")
