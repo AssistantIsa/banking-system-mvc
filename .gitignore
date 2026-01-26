@@ -108,3 +108,16 @@ secrets.yml
 credentials.json
 service-account.json
 EOF
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
