@@ -399,37 +399,55 @@ CREATE TABLE transactions (
 
 ---
 
-## 🔄 Future Enhancements
+## 🌐 REST API
 
-### Phase 1 - Advanced Features (1-2 weeks)
-- [ ] Daily withdrawal limits
-- [ ] Interest calculation for savings accounts
-- [ ] Account statements (PDF export)
-- [ ] Email notifications
-- [ ] Minimum balance requirements
+**NEW:** This project now includes a complete REST API!
 
-### Phase 2 - Web Interface (2-3 weeks)
-- [ ] Flask web application
-- [ ] REST API endpoints
-- [ ] JWT authentication
-- [ ] HTML/CSS/JavaScript frontend
-- [ ] Real-time balance updates
+### Quick Start
+python -m api.app
 
-### Phase 3 - Advanced Security (1-2 weeks)
-- [ ] Two-factor authentication (2FA)
-- [ ] Login attempt limiting
-- [ ] Session timeout
-- [ ] Audit logs
-- [ ] Role-based access control (Admin/User)
+Server runs on: http://localhost:5000
 
-### Phase 4 - Production Ready (2-3 weeks)
-- [ ] PostgreSQL database
-- [ ] Docker containerization
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Performance optimization
-- [ ] Load testing
+### Features
+- ✅ RESTful architecture (8 endpoints)
+- ✅ JWT token authentication
+- ✅ User registration and login
+- ✅ Complete banking operations
+- ✅ Transaction history
+- ✅ PostgreSQL integration
+- ✅ CORS enabled
+
+### API Documentation
+See [README_API.md](README_API.md) for complete API documentation.
+
+### Example
+# Register user
+curl -X POST http://localhost:5000/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"user","password":"pass","email":"user@test.com"}'
+
+# Login and get JWT token
+curl -X POST http://localhost:5000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"user","password":"pass"}'
+
+**Technologies:** Flask, JWT, PostgreSQL, REST API, CORS
 
 ---
+
+## 🔄 Future Enhancements (Now Optional)
+
+### Phase 2 - Frontend (Planned)
+- [ ] React frontend with modern UI
+- [ ] Real-time updates
+- [ ] Dashboard with charts
+
+### Phase 3 - Advanced (Planned)
+- [ ] Microservices architecture
+- [ ] Kubernetes deployment
+- [ ] CI/CD pipeline
+
+
 
 ## 📚 Learning Outcomes
 
