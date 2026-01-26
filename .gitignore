@@ -1,3 +1,4 @@
+cat > .gitignore << 'EOF'
 # Python
 __pycache__/
 *.py[cod]
@@ -19,6 +20,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Virtual Environment
 venv/
@@ -27,17 +29,15 @@ ENV/
 env.bak/
 venv.bak/
 
-# Docker
-*.log
-Dockerfile.bak
-docker-compose.yml.bak
-
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
 
 # OS
 .DS_Store
@@ -51,17 +51,22 @@ Thumbs.db
 # Temp files
 *.tmp
 *.temp
+*.log
 
-# Database
+# Database files
 *.db
 *.sqlite3
-
-# Docker ignore
-.dockerignore
+banking_system.db
 
 # Logs
-*.log
 logs/
+*.log
+
+# Backup files
+backups/
+
+# Docker
+.dockerignore
 
 # Environment variables
 .env
@@ -74,6 +79,7 @@ logs/
 .coverage
 .coverage.*
 htmlcov/
+.coverage.xml
 
 # Jupyter
 .ipynb_checkpoints
@@ -87,6 +93,18 @@ dmypy.json
 .pyre/
 
 # Project specific
-/database/*.db
 /temp/
 /tmp/
+
+# Testing
+.pytest_cache/
+test_results/
+
+# Documentation
+_build/
+
+# Secrets
+secrets.yml
+credentials.json
+service-account.json
+EOF
