@@ -1,4 +1,6 @@
-# 🏦 Banking System MVC - Professional CLI Application
+# 🏦 Banking System MVC
+
+A complete banking system with MVC architecture, Flask API, and Docker support.
 
 **Author:** Juan Sánchez  
 **LinkedIn:** [linkedin.com/in/juansanchezdev](https://linkedin.com/in/juansanchezdev)  
@@ -16,6 +18,22 @@ A professional **banking system simulation** implementing the **Model-View-Contr
 ---
 
 ## ⭐ Key Features
+
+## 🐳 Docker Deployment
+### Build and run:
+
+```bash
+docker-compose up --build -d
+```
+
+## 🚀 Features
+- User authentication and authorization
+- Account management (create, read, update, delete)
+- Transaction processing (deposits, withdrawals, transfers)
+- RESTful API with Flask
+- Docker containerization
+- Database models with SQLAlchemy
+- Comprehensive testing suite
 
 ### 🔐 User Management
 - ✅ User registration with encrypted passwords (SHA-256)
@@ -81,7 +99,8 @@ banking-app-mvc/
 │
 ├── logs/                            # Application logs
 ├── backups/                         # Database backups
-│
+├── api/                             # Flask application
+└── middleware/                      # Authentication middleware
 ├── setup.sh                         # Bash setup script
 ├── requirements.txt                 # Dependencies (empty - stdlib only)
 ├── .gitignore                       # Git ignore rules
@@ -90,13 +109,19 @@ banking-app-mvc/
 
 ---
 
+
+
 ## 🚀 Installation & Setup
 
-### Prerequisites
+### 🔧 Requirements
 
-- **Python 3.8+** (no external packages required)
-- Terminal/Command Line
-- Git (for cloning)
+    Python 3.11+
+
+    Docker & Docker Compose
+
+    PostgreSQL (optional)
+    Terminal/Command Line
+    Git (for cloning)
 
 ### Option 1: Automatic Setup (Linux/Mac)
 
@@ -430,6 +455,50 @@ curl -X POST http://localhost:5000/api/register \
 curl -X POST http://localhost:5000/api/login \
   -H "Content-Type: application/json" \
   -d '{"username":"user","password":"pass"}'
+
+**Technologies:** Flask, JWT, PostgreSQL, REST API, CORS
+
+---
+---
+
+## 🌐 REST API
+
+**✨ NEW FEATURE:** Complete REST API with JWT Authentication
+
+### Quick Start
+```bash
+python -m api.app
+```
+Server: http://localhost:5000
+
+### Features
+- ✅ 8 RESTful endpoints
+- ✅ JWT token authentication
+- ✅ User registration & login
+- ✅ Banking operations (deposit, withdraw, transfer)
+- ✅ Transaction history
+- ✅ PostgreSQL integration
+- ✅ CORS enabled
+
+### Documentation
+📚 **[Complete API Documentation](README_API.md)**
+
+### Example Usage
+```bash
+# Register
+curl -X POST http://localhost:5000/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"user","password":"pass","email":"user@test.com"}'
+
+# Login
+curl -X POST http://localhost:5000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"user","password":"pass"}'
+
+# Use JWT token in requests
+curl http://localhost:5000/api/accounts \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
 
 **Technologies:** Flask, JWT, PostgreSQL, REST API, CORS
 
