@@ -5,7 +5,7 @@ A complete banking system with MVC architecture, Flask API, and Docker support.
 **Author:** Juan Sánchez  
 **LinkedIn:** [linkedin.com/in/juansanchezdev](https://linkedin.com/in/juansanchezdev)  
 **GitHub:** [github.com/AssistantIsa](https://github.com/AssistantIsa)  
-**Email:** juantolucamexic@gmail.com
+**Email:** usanaconisa@gmail.com
 
 ---
 
