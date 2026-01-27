@@ -566,7 +566,7 @@ This project is open source and available under the MIT License.
 **Juan Sánchez**  
 Junior Python Developer | IT Support Specialist
 
-📧 Email: juantolucamexic@gmail.com  
+📧 Email: usanaconisa@gmail.com  
 🔗 LinkedIn: [linkedin.com/in/juansanchezdev](https://linkedin.com/in/juansanchezdev)  
 💻 GitHub: [github.com/AssistantIsa](https://github.com/AssistantIsa)  
 📍 Location: Cologne, Germany | Open to Remote Work
