@@ -1,439 +1,364 @@
-"""
-Versión mejorada que guarda todo en base de datos
-"""
-
-import sys
+# controllers/bank_controller.py
+import uuid
+from decimal import Decimal
 from datetime import datetime
-
-# Importar modelos
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import and_, or_, desc
+from database.db_manager import db_session
 from models.user import User
 from models.account import Account
 from models.transaction import Transaction
+import logging
 
-# Importar database manager
-from database.db_manager import DatabaseManager
-
+logger = logging.getLogger(__name__)
 
 class BankController:
-    """Controla la lógica de negocio con persistencia en SQLite"""
     
-    def __init__(self, view, db_path="banking_system.db"):
-        self.view = view
-        self.db = DatabaseManager()
-        self.current_user = None
-        
-        # Cargar datos desde la base de datos
-        self._load_from_database()
-        
-        # Si no hay usuarios, crear uno de prueba
-        if not self.db.get_all_users():
-            self._create_test_data()
-    
-    def _load_from_database(self):
-        """Carga todos los datos desde la base de datos al iniciar"""
-        print("📂 Cargando datos desde la base de datos...")
-        
-        # Obtener estadísticas
-        stats = self.db.get_database_stats()
-        print(f"   → {stats.get('total_users', 0)} usuarios")
-        print(f"   → {stats.get('total_accounts', 0)} cuentas")
-        print(f"   → {stats.get('total_transactions', 0)} transacciones")
-    
-    def _create_test_data(self):
-        """Crea datos de prueba en la base de datos"""
-        print("🔧 Creando usuario de prueba...")
-        
-        # Crear usuario de prueba
-        test_user = User(
-            user_id=1,
-            username="demo",
-            password="demo123",
-            email="demo@banco.com"
-        )
-        
-        # Guardar en base de datos
-        if self.db.save_user(test_user):
-            # Crear cuenta de prueba
-            test_account = Account(
-                owner_id=test_user.user_id,
-                account_type="savings",
-                initial_balance=1000.0
-            )
-            
-            self.db.save_account(test_account)
-            
-            # Crear transacción inicial
-            initial_transaction = Transaction(
-                account_number=test_account.account_number,
-                transaction_type="deposit",
-                amount=1000.0,
-                description="Depósito inicial"
-            )
-            
-            self.db.save_transaction(initial_transaction)
-            
-            print("✅ Usuario de prueba creado: demo/demo123")
-    
-    def run(self):
-        """Ejecuta el bucle principal de la aplicación"""
+    # ===== USER OPERATIONS =====
+    @staticmethod
+    def create_user(username, email, password_hash, first_name, last_name, 
+                   document_id=None, phone=None, is_admin=False):
+        """Crear nuevo usuario"""
         try:
-            while True:
-                if self.current_user is None:
-                    self._show_main_menu()
+            with db_session() as session:
+                # Verificar si el usuario ya existe
+                existing = session.query(User).filter(
+                    or_(User.username == username, User.email == email)
+                ).first()
+                
+                if existing:
+                    return {"error": "Username or email already exists"}, 409
+                
+                # Crear nuevo usuario
+                user = User(
+                    username=username,
+                    email=email,
+                    password_hash=password_hash,
+                    first_name=first_name,
+                    last_name=last_name,
+                    document_id=document_id,
+                    phone=phone,
+                    is_admin=is_admin
+                )
+                
+                session.add(user)
+                session.flush()  # Para obtener el ID sin hacer commit
+                
+                # Crear cuenta por defecto
+                default_account = Account(
+                    account_number=f"CHK-{str(user.id)[:8].upper()}",
+                    user_id=user.id,
+                    account_type='checking',
+                    balance=Decimal('0.00'),
+                    currency='USD'
+                )
+                session.add(default_account)
+                
+                return {"message": "User created successfully", "user": user.to_dict()}, 201
+                
+        except SQLAlchemyError as e:
+            logger.error(f"Error creating user: {e}")
+            return {"error": "Database error occurred"}, 500
+    
+    @staticmethod
+    def get_user(user_id=None, username=None, email=None):
+        """Obtener usuario por ID, username o email"""
+        try:
+            with db_session() as session:
+                query = session.query(User)
+                
+                if user_id:
+                    user = query.filter(User.id == uuid.UUID(user_id)).first()
+                elif username:
+                    user = query.filter(User.username == username).first()
+                elif email:
+                    user = query.filter(User.email == email).first()
                 else:
-                    self._show_user_menu()
-        except KeyboardInterrupt:
-            print("\n\n👋 Cerrando aplicación...")
-            self._cleanup()
-        except Exception as e:
-            print(f"\n❌ Error inesperado: {e}")
-            self._cleanup()
-    
-    def _cleanup(self):
-        """Limpia recursos antes de salir"""
-        if self.db:
-            self.db.close()
-        print("✅ Sesión cerrada correctamente")
-        sys.exit(0)
-    
-    def _show_main_menu(self):
-        """Maneja el menú principal (sin autenticación)"""
-        self.view.show_main_menu()
-        choice = self.view.get_input("Seleccione una opción")
-        
-        if choice == "1":
-            self._login()
-        elif choice == "2":
-            self._register_user()
-        elif choice == "3":
-            self.view.show_message("¡Gracias por usar Banco MVC!", "success")
-            self._cleanup()
-        else:
-            self.view.show_message("Opción inválida", "error")
-    
-    def _show_user_menu(self):
-        """Maneja el menú de usuario autenticado"""
-        self.view.show_user_menu(self.current_user.username)
-        choice = self.view.get_input("Seleccione una opción")
-        
-        if choice == "1":
-            self._view_accounts()
-        elif choice == "2":
-            self._create_account()
-        elif choice == "3":
-            self._deposit()
-        elif choice == "4":
-            self._withdraw()
-        elif choice == "5":
-            self._transfer()
-        elif choice == "6":
-            self._view_transactions()
-        elif choice == "7":
-            self._logout()
-        else:
-            self.view.show_message("Opción inválida", "error")
-    
-    def _login(self):
-        """Maneja el inicio de sesión con base de datos"""
-        username = self.view.get_input("Usuario")
-        password = self.view.get_input("Contraseña")
-        
-        # Buscar usuario en base de datos
-        user_data = self.db.get_user_by_username(username)
-        
-        if user_data:
-            # Reconstruir objeto User desde la base de datos
-            user = User(
-                user_id=user_data['user_id'],
-                username=user_data['username'],
-                password="",  # No necesitamos la contraseña real
-                email=user_data['email']
-            )
-            user.password_hash = user_data['password_hash']
-            user.created_at = datetime.fromisoformat(user_data['created_at'])
-            
-            # Verificar contraseña
-            if user.verify_password(password):
-                # Cargar cuentas del usuario
-                accounts_data = self.db.get_accounts_by_owner(user.user_id)
+                    return {"error": "Must provide user_id, username or email"}, 400
                 
-                for acc_data in accounts_data:
-                    account = Account(
-                        owner_id=acc_data['owner_id'],
-                        account_type=acc_data['account_type'],
-                        initial_balance=acc_data['balance']
+                if not user:
+                    return {"error": "User not found"}, 404
+                
+                return {"user": user.to_dict()}, 200
+                
+        except (ValueError, SQLAlchemyError) as e:
+            logger.error(f"Error getting user: {e}")
+            return {"error": "Invalid input or database error"}, 400
+    
+    # ===== ACCOUNT OPERATIONS =====
+    @staticmethod
+    def create_account(user_id, account_type='checking', initial_balance=0.0):
+        """Crear nueva cuenta bancaria"""
+        try:
+            with db_session() as session:
+                # Verificar que el usuario existe
+                user = session.query(User).filter(User.id == uuid.UUID(user_id)).first()
+                if not user:
+                    return {"error": "User not found"}, 404
+                
+                # Generar número de cuenta único
+                account_number = f"{account_type[:3].upper()}-{str(uuid.uuid4())[:8].upper()}"
+                
+                # Crear cuenta
+                account = Account(
+                    account_number=account_number,
+                    user_id=user.id,
+                    account_type=account_type,
+                    balance=Decimal(str(initial_balance)),
+                    currency='USD'
+                )
+                
+                session.add(account)
+                return {
+                    "message": "Account created successfully",
+                    "account": account.to_dict()
+                }, 201
+                
+        except (ValueError, SQLAlchemyError) as e:
+            logger.error(f"Error creating account: {e}")
+            return {"error": "Invalid input or database error"}, 400
+    
+    @staticmethod
+    def get_account(account_id=None, account_number=None):
+        """Obtener cuenta por ID o número de cuenta"""
+        try:
+            with db_session() as session:
+                query = session.query(Account)
+                
+                if account_id:
+                    account = query.filter(Account.id == uuid.UUID(account_id)).first()
+                elif account_number:
+                    account = query.filter(Account.account_number == account_number).first()
+                else:
+                    return {"error": "Must provide account_id or account_number"}, 400
+                
+                if not account:
+                    return {"error": "Account not found"}, 404
+                
+                return {"account": account.to_dict()}, 200
+                
+        except (ValueError, SQLAlchemyError) as e:
+            logger.error(f"Error getting account: {e}")
+            return {"error": "Invalid input or database error"}, 400
+    
+    # ===== TRANSACTION OPERATIONS =====
+    @staticmethod
+    def transfer_funds(from_account_id, to_account_id, amount, description=""):
+        """Transferir fondos entre cuentas"""
+        try:
+            amount_decimal = Decimal(str(amount))
+            if amount_decimal <= 0:
+                return {"error": "Amount must be positive"}, 400
+            
+            with db_session() as session:
+                # Obtener cuentas con bloqueo para evitar race conditions
+                from_account = session.query(Account).filter(
+                    Account.id == uuid.UUID(from_account_id)
+                ).with_for_update().first()
+                
+                to_account = session.query(Account).filter(
+                    Account.id == uuid.UUID(to_account_id)
+                ).with_for_update().first()
+                
+                if not from_account or not to_account:
+                    return {"error": "One or both accounts not found"}, 404
+                
+                if from_account.status != 'active' or to_account.status != 'active':
+                    return {"error": "One or both accounts are not active"}, 400
+                
+                if from_account.balance < amount_decimal:
+                    return {"error": "Insufficient funds"}, 400
+                
+                # Realizar transferencia
+                from_account.balance -= amount_decimal
+                to_account.balance += amount_decimal
+                
+                # Crear registro de transacción
+                transaction = Transaction(
+                    transaction_code=f"TXN-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    from_account_id=from_account.id,
+                    to_account_id=to_account.id,
+                    amount=amount_decimal,
+                    transaction_type='transfer',
+                    description=description,
+                    status='completed'
+                )
+                
+                session.add(transaction)
+                
+                return {
+                    "message": "Transfer completed successfully",
+                    "transaction": transaction.to_dict(),
+                    "new_balance": float(from_account.balance)
+                }, 200
+                
+        except (ValueError, SQLAlchemyError) as e:
+            logger.error(f"Error transferring funds: {e}")
+            return {"error": "Transfer failed"}, 500
+    
+    @staticmethod
+    def deposit_funds(account_id, amount, description=""):
+        """Depositar fondos a una cuenta"""
+        try:
+            amount_decimal = Decimal(str(amount))
+            if amount_decimal <= 0:
+                return {"error": "Amount must be positive"}, 400
+            
+            with db_session() as session:
+                account = session.query(Account).filter(
+                    Account.id == uuid.UUID(account_id)
+                ).with_for_update().first()
+                
+                if not account:
+                    return {"error": "Account not found"}, 404
+                
+                if account.status != 'active':
+                    return {"error": "Account is not active"}, 400
+                
+                # Realizar depósito
+                account.balance += amount_decimal
+                
+                # Crear registro de transacción
+                transaction = Transaction(
+                    transaction_code=f"DEP-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    from_account_id=None,
+                    to_account_id=account.id,
+                    amount=amount_decimal,
+                    transaction_type='deposit',
+                    description=description,
+                    status='completed'
+                )
+                
+                session.add(transaction)
+                
+                return {
+                    "message": "Deposit completed successfully",
+                    "transaction": transaction.to_dict(),
+                    "new_balance": float(account.balance)
+                }, 200
+                
+        except (ValueError, SQLAlchemyError) as e:
+            logger.error(f"Error depositing funds: {e}")
+            return {"error": "Deposit failed"}, 500
+    
+    @staticmethod
+    def withdraw_funds(account_id, amount, description=""):
+        """Retirar fondos de una cuenta"""
+        try:
+            amount_decimal = Decimal(str(amount))
+            if amount_decimal <= 0:
+                return {"error": "Amount must be positive"}, 400
+            
+            with db_session() as session:
+                account = session.query(Account).filter(
+                    Account.id == uuid.UUID(account_id)
+                ).with_for_update().first()
+                
+                if not account:
+                    return {"error": "Account not found"}, 404
+                
+                if account.status != 'active':
+                    return {"error": "Account is not active"}, 400
+                
+                if account.balance < amount_decimal:
+                    return {"error": "Insufficient funds"}, 400
+                
+                # Realizar retiro
+                account.balance -= amount_decimal
+                
+                # Crear registro de transacción
+                transaction = Transaction(
+                    transaction_code=f"WDL-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    from_account_id=account.id,
+                    to_account_id=None,
+                    amount=amount_decimal,
+                    transaction_type='withdrawal',
+                    description=description,
+                    status='completed'
+                )
+                
+                session.add(transaction)
+                
+                return {
+                    "message": "Withdrawal completed successfully",
+                    "transaction": transaction.to_dict(),
+                    "new_balance": float(account.balance)
+                }, 200
+                
+        except (ValueError, SQLAlchemyError) as e:
+            logger.error(f"Error withdrawing funds: {e}")
+            return {"error": "Withdrawal failed"}, 500
+    
+    # ===== QUERY OPERATIONS =====
+    @staticmethod
+    def get_user_accounts(user_id):
+        """Obtener todas las cuentas de un usuario"""
+        try:
+            with db_session() as session:
+                accounts = session.query(Account).filter(
+                    Account.user_id == uuid.UUID(user_id)
+                ).all()
+                
+                return {
+                    "user_id": user_id,
+                    "accounts": [acc.to_dict() for acc in accounts],
+                    "total_balance": float(sum(acc.balance for acc in accounts))
+                }, 200
+                
+        except (ValueError, SQLAlchemyError) as e:
+            logger.error(f"Error getting user accounts: {e}")
+            return {"error": "Invalid input or database error"}, 400
+    
+    @staticmethod
+    def get_account_transactions(account_id, limit=50, offset=0):
+        """Obtener transacciones de una cuenta"""
+        try:
+            with db_session() as session:
+                transactions = session.query(Transaction).filter(
+                    or_(
+                        Transaction.from_account_id == uuid.UUID(account_id),
+                        Transaction.to_account_id == uuid.UUID(account_id)
                     )
-                    account.account_number = acc_data['account_number']
-                    account.created_at = datetime.fromisoformat(acc_data['created_at'])
-                    account.is_active = bool(acc_data['is_active'])
-                    
-                    # Cargar transacciones de la cuenta
-                    trans_data = self.db.get_transactions_by_account(account.account_number)
-                    
-                    for t_data in trans_data:
-                        trans = Transaction(
-                            account_number=t_data['account_number'],
-                            transaction_type=t_data['transaction_type'],
-                            amount=t_data['amount'],
-                            description=t_data['description']
-                        )
-                        trans.transaction_id = t_data['transaction_id']
-                        trans.timestamp = datetime.fromisoformat(t_data['timestamp'])
-                        trans.status = t_data['status']
-                        account.transactions.append(trans)
-                    
-                    user.add_account(account)
+                ).order_by(desc(Transaction.created_at)).limit(limit).offset(offset).all()
                 
-                self.current_user = user
-                self.view.show_message(f"Bienvenido/a, {username}!", "success")
-                return
-        
-        self.view.show_message("Usuario o contraseña incorrectos", "error")
+                return {
+                    "account_id": account_id,
+                    "transactions": [txn.to_dict() for txn in transactions],
+                    "count": len(transactions)
+                }, 200
+                
+        except (ValueError, SQLAlchemyError) as e:
+            logger.error(f"Error getting account transactions: {e}")
+            return {"error": "Invalid input or database error"}, 400
     
-    def _register_user(self):
-        """Registra un nuevo usuario en la base de datos"""
-        username = self.view.get_input("Nombre de usuario")
-        
-        # Verificar si el usuario ya existe
-        if self.db.get_user_by_username(username):
-            self.view.show_message("El usuario ya existe", "error")
-            return
-        
-        password = self.view.get_input("Contraseña")
-        email = self.view.get_input("Email")
-        
-        # Obtener el último ID
-        all_users = self.db.get_all_users()
-        next_id = max([u['user_id'] for u in all_users], default=0) + 1
-        
-        # Crear nuevo usuario
-        new_user = User(next_id, username, password, email)
-        
-        # Guardar en base de datos
-        if self.db.save_user(new_user):
-            self.view.show_message(
-                "Usuario registrado exitosamente. ¡Ahora puedes iniciar sesión!", 
-                "success"
-            )
-        else:
-            self.view.show_message("Error al registrar usuario", "error")
-    
-    def _logout(self):
-        """Cierra la sesión del usuario actual"""
-        self.view.show_message(f"Hasta luego, {self.current_user.username}!", "success")
-        self.current_user = None
-    
-    def _view_accounts(self):
-        """Muestra las cuentas del usuario"""
-        self.view.show_accounts(self.current_user.accounts)
-        self.view.pause()
-    
-    def _create_account(self):
-        """Crea una nueva cuenta bancaria y la guarda en DB"""
-        print("\nTipos de cuenta disponibles:")
-        print("1. Ahorros (savings)")
-        print("2. Corriente (checking)")
-        
-        choice = self.view.get_input("Seleccione tipo de cuenta")
-        account_type = "savings" if choice == "1" else "checking"
-        
-        initial_balance = self.view.get_numeric_input("Depósito inicial")
-        
-        # Crear nueva cuenta
-        new_account = Account(
-            owner_id=self.current_user.user_id,
-            account_type=account_type,
-            initial_balance=initial_balance
-        )
-        
-        # Guardar en base de datos
-        if self.db.save_account(new_account):
-            # Crear transacción inicial
-            initial_trans = Transaction(
-                account_number=new_account.account_number,
-                transaction_type="deposit",
-                amount=initial_balance,
-                description="Depósito inicial"
-            )
-            
-            self.db.save_transaction(initial_trans)
-            new_account.add_transaction(initial_trans)
-            
-            # Añadir al usuario
-            self.current_user.add_account(new_account)
-            
-            self.view.show_account_created(new_account.account_number, account_type)
-        else:
-            self.view.show_message("Error al crear cuenta", "error")
-        
-        self.view.pause()
-    
-    def _deposit(self):
-        """Maneja el depósito de dinero con persistencia"""
-        if not self.current_user.accounts:
-            self.view.show_message("No tienes cuentas. Crea una primero.", "warning")
-            return
-        
-        self.view.show_accounts(self.current_user.accounts)
-        account_num = int(self.view.get_input("Número de cuenta"))
-        
-        # Buscar cuenta
-        account = next((acc for acc in self.current_user.accounts 
-                       if acc.account_number == account_num), None)
-        
-        if not account:
-            self.view.show_message("Cuenta no encontrada", "error")
-            return
-        
-        amount = self.view.get_numeric_input("Monto a depositar")
-        
+    @staticmethod
+    def get_bank_summary():
+        """Obtener resumen general del banco"""
         try:
-            # Realizar depósito
-            account.deposit(amount)
-            
-            # Actualizar en base de datos
-            self.db.update_account_balance(account_num, account.balance)
-            
-            # Crear y guardar transacción
-            transaction = Transaction(
-                account_num, 
-                "deposit", 
-                amount, 
-                "Depósito en efectivo"
-            )
-            self.db.save_transaction(transaction)
-            account.add_transaction(transaction)
-            
-            self.view.show_message(
-                f"Depósito exitoso. Nuevo saldo: ${account.balance:.2f}", 
-                "success"
-            )
-        except ValueError as e:
-            self.view.show_message(str(e), "error")
-        
-        self.view.pause()
-    
-    def _withdraw(self):
-        """Maneja el retiro de dinero con persistencia"""
-        if not self.current_user.accounts:
-            self.view.show_message("No tienes cuentas.", "warning")
-            return
-        
-        self.view.show_accounts(self.current_user.accounts)
-        account_num = int(self.view.get_input("Número de cuenta"))
-        
-        account = next((acc for acc in self.current_user.accounts 
-                       if acc.account_number == account_num), None)
-        
-        if not account:
-            self.view.show_message("Cuenta no encontrada", "error")
-            return
-        
-        amount = self.view.get_numeric_input("Monto a retirar")
-        
-        try:
-            # Realizar retiro
-            account.withdraw(amount)
-            
-            # Actualizar en base de datos
-            self.db.update_account_balance(account_num, account.balance)
-            
-            # Crear y guardar transacción
-            transaction = Transaction(
-                account_num, 
-                "withdrawal", 
-                amount, 
-                "Retiro en efectivo"
-            )
-            self.db.save_transaction(transaction)
-            account.add_transaction(transaction)
-            
-            self.view.show_message(
-                f"Retiro exitoso. Nuevo saldo: ${account.balance:.2f}", 
-                "success"
-            )
-        except ValueError as e:
-            self.view.show_message(str(e), "error")
-        
-        self.view.pause()
-    
-    def _transfer(self):
-        """Maneja transferencias entre cuentas con persistencia"""
-        if not self.current_user.accounts:
-            self.view.show_message("No tienes cuentas.", "warning")
-            return
-        
-        self.view.show_accounts(self.current_user.accounts)
-        from_account_num = int(self.view.get_input("Cuenta origen"))
-        to_account_num = int(self.view.get_input("Cuenta destino"))
-        
-        from_account = next((acc for acc in self.current_user.accounts 
-                            if acc.account_number == from_account_num), None)
-        
-        if not from_account:
-            self.view.show_message("Cuenta origen no válida", "error")
-            return
-        
-        # Buscar cuenta destino en DB (puede ser de otro usuario)
-        to_account_data = self.db.get_account_by_number(to_account_num)
-        
-        if not to_account_data:
-            self.view.show_message("Cuenta destino no encontrada", "error")
-            return
-        
-        amount = self.view.get_numeric_input("Monto a transferir")
-        
-        try:
-            # Realizar transferencia
-            from_account.withdraw(amount)
-            
-            # Actualizar ambas cuentas en DB
-            self.db.update_account_balance(from_account_num, from_account.balance)
-            new_to_balance = to_account_data['balance'] + amount
-            self.db.update_account_balance(to_account_num, new_to_balance)
-            
-            # Crear transacciones
-            trans_out = Transaction(
-                from_account_num, 
-                "transfer_out", 
-                amount, 
-                f"Transferencia a cuenta {to_account_num}"
-            )
-            trans_in = Transaction(
-                to_account_num, 
-                "transfer_in", 
-                amount, 
-                f"Transferencia desde cuenta {from_account_num}"
-            )
-            
-            self.db.save_transaction(trans_out)
-            self.db.save_transaction(trans_in)
-            from_account.add_transaction(trans_out)
-            
-            self.view.show_message(
-                f"Transferencia exitosa. Nuevo saldo: ${from_account.balance:.2f}", 
-                "success"
-            )
-        except ValueError as e:
-            self.view.show_message(str(e), "error")
-        
-        self.view.pause()
-    
-    def _view_transactions(self):
-        """Muestra el historial de transacciones desde DB"""
-        if not self.current_user.accounts:
-            self.view.show_message("No tienes cuentas.", "warning")
-            return
-        
-        self.view.show_accounts(self.current_user.accounts)
-        account_num = int(self.view.get_input("Número de cuenta"))
-        
-        account = next((acc for acc in self.current_user.accounts 
-                       if acc.account_number == account_num), None)
-        
-        if not account:
-            self.view.show_message("Cuenta no encontrada", "error")
-            return
-        
-        self.view.show_transactions(account.transactions)
-        self.view.pause()
+            with db_session() as session:
+                from sqlalchemy import func
+                
+                total_users = session.query(func.count(User.id)).scalar()
+                total_accounts = session.query(func.count(Account.id)).scalar()
+                total_balance = session.query(func.sum(Account.balance)).scalar() or Decimal('0.00')
+                total_transactions = session.query(func.count(Transaction.id)).scalar()
+                
+                # Últimas transacciones
+                recent_transactions = session.query(Transaction).order_by(
+                    desc(Transaction.created_at)
+                ).limit(10).all()
+                
+                return {
+                    "summary": {
+                        "total_users": total_users,
+                        "total_accounts": total_accounts,
+                        "total_balance": float(total_balance),
+                        "total_transactions": total_transactions,
+                        "average_balance": float(total_balance / total_accounts) if total_accounts > 0 else 0.0
+                    },
+                    "recent_transactions": [txn.to_dict() for txn in recent_transactions]
+                }, 200
+                
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting bank summary: {e}")
+            return {"error": "Database error occurred"}, 500

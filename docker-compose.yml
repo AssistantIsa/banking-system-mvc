@@ -1,7 +1,35 @@
+
 services:
+  # PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: banking_db
+      POSTGRES_USER: banking_user
+      POSTGRES_PASSWORD: banking_password_2024
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Flask API
   api:
-    build: .
+    build: ./backend
     ports:
       - "5000:5000"
     environment:
-      FLASK_ENV: development
+      DATABASE_URL: postgresql://banking_user:banking_password_2024@postgres:5432/banking_db
+      CORS_ORIGINS: "http://frontend:80,http://localhost:3000"
+    depends_on:
+      - postgres
+
+  # React Frontend
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"  # Nginx en 80, mapeado a 3000
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

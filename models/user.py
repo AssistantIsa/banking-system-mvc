@@ -1,33 +1,40 @@
-"""
-Representa un usuario del sistema bancario
-"""
-
+# models/user.py
+import uuid
 from datetime import datetime
-import hashlib
+from sqlalchemy import Column, String, Boolean, DateTime
+from sqlalchemy.dialects.postgresql import UUID
+from database.db_manager import Base
 
-
-class User:
-    """Representa un usuario del banco"""
+class User(Base):
+    __tablename__ = 'users'
     
-    def __init__(self, user_id, username, password, email):
-        self.user_id = user_id
-        self.username = username
-        self.password_hash = self._hash_password(password)
-        self.email = email
-        self.created_at = datetime.now()
-        self.accounts = []
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    username = Column(String(50), unique=True, nullable=False)
+    email = Column(String(100), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    document_id = Column(String(20), unique=True)
+    phone = Column(String(20))
+    is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    def _hash_password(self, password):
-        """Encripta la contraseña usando SHA-256"""
-        return hashlib.sha256(password.encode()).hexdigest()
+    def __repr__(self):
+        return f"<User {self.username} ({self.email})>"
     
-    def verify_password(self, password):
-        """Verifica si la contraseña es correcta"""
-        return self.password_hash == self._hash_password(password)
-    
-    def add_account(self, account):
-        """Añade una cuenta bancaria al usuario"""
-        self.accounts.append(account)
-    
-    def __str__(self):
-        return f"Usuario: {self.username} (ID: {self.user_id})"
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'username': self.username,
+            'email': self.email,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'document_id': self.document_id,
+            'phone': self.phone,
+            'is_active': self.is_active,
+            'is_admin': self.is_admin,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
