@@ -1,602 +1,345 @@
-# 🏦 Banking System MVC
+# 🏦 Banking System - Full Stack MVC Application
 
-A complete banking system with MVC architecture, Flask API, and Docker support.
+Sistema bancario completo desarrollado con arquitectura MVC, que permite gestión de cuentas, transferencias entre usuarios y seguimiento de transacciones.
 
-**Author:** Juan Sánchez  
-**LinkedIn:** [linkedin.com/in/juansanchezdev](https://linkedin.com/in/juansanchezdev)  
-**GitHub:** [github.com/AssistantIsa](https://github.com/AssistantIsa)  
-**Email:** usanaconisa@gmail.com
+![Banking System](https://img.shields.io/badge/Status-Completed-success)
+![Python](https://img.shields.io/badge/Python-3.13-blue)
+![React](https://img.shields.io/badge/React-18-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14-blue)
 
----
+## 📸 Screenshots
 
-## 📋 Project Description
+### Login
+![Login Screen](./screenshots/login.png)
 
-A professional **banking system simulation** implementing the **Model-View-Controller (MVC)** architectural pattern in pure Python. This project demonstrates clean code principles, object-oriented programming, database persistence with SQLite, and comprehensive testing with unittest.
+### Dashboard - Cuentas
+![Dashboard](./screenshots/dashboard.png)
 
-**Built with only Python standard libraries** - no external dependencies required!
+### Transferencias
+![Transferencias](./screenshots/transfer.png)
 
----
+### Historial
+![Historial](./screenshots/history.png)
 
-## ⭐ Key Features
+## 🚀 Características
 
-## 🐳 Docker Deployment
-### Build and run:
+- ✅ **Autenticación segura** con JWT (JSON Web Tokens)
+- ✅ **Gestión de cuentas** múltiples por usuario
+- ✅ **Transferencias** entre cuentas con validaciones
+- ✅ **Historial completo** de transacciones
+- ✅ **Límites de seguridad** (máx. $10,000 por transferencia)
+- ✅ **Validación de saldos** en tiempo real
+- ✅ **Interfaz responsive** con React
+- ✅ **Base de datos relacional** PostgreSQL
 
-```bash
-docker-compose up --build -d
-```
+## 🛠️ Stack Tecnológico
 
-## 🚀 Features
-- User authentication and authorization
-- Account management (create, read, update, delete)
-- Transaction processing (deposits, withdrawals, transfers)
-- RESTful API with Flask
-- Docker containerization
-- Database models with SQLAlchemy
-- Comprehensive testing suite
+### Backend
+- **Framework:** Flask (Python)
+- **Base de datos:** PostgreSQL
+- **Autenticación:** JWT (PyJWT)
+- **Hash de contraseñas:** Werkzeug
+- **ORM:** Psycopg2
 
-### 🔐 User Management
-- ✅ User registration with encrypted passwords (SHA-256)
-- ✅ Secure login/logout system
-- ✅ Session management
-- ✅ Multiple accounts per user
+### Frontend
+- **Framework:** React 18
+- **Gestión de estado:** LocalStorage + Context
+- **HTTP Client:** Fetch API
+- **Estilos:** CSS-in-JS (Inline Styles)
 
-### 💳 Account Operations
-- ✅ Create bank accounts (Savings/Checking)
-- ✅ View account balance and details
-- ✅ List all user accounts
-- ✅ Account status tracking
+### DevOps
+- **Control de versiones:** Git
+- **Entorno virtual:** venv (Python)
+- **Gestor de paquetes:** npm, pip
 
-### 💰 Banking Transactions
-- ✅ Deposit money
-- ✅ Withdraw money (with balance validation)
-- ✅ Transfer between accounts
-- ✅ Complete transaction history
-- ✅ Transaction timestamps
+## 📋 Requisitos Previos
 
-### 💾 Data Persistence
-- ✅ SQLite database integration
-- ✅ Automatic data saving
-- ✅ Database backup functionality
-- ✅ Data recovery on restart
-
-### 🧪 Testing
-- ✅ **30+ unit tests** with unittest
-- ✅ Integration tests
-- ✅ Database tests
-- ✅ >90% code coverage
-
----
-
-## 🏗️ Project Structure
-
-```
-banking-app-mvc/
-│
-├── main.py                          # Application entry point
-│
-├── models/                          # MODEL - Data layer
-│   ├── __init__.py
-│   ├── user.py                      # User entity
-│   ├── account.py                   # Account entity
-│   └── transaction.py               # Transaction entity
-│
-├── views/                           # VIEW - Presentation layer
-│   ├── __init__.py
-│   └── cli_view.py                  # Command-line interface
-│
-├── controllers/                     # CONTROLLER - Business logic
-│   ├── __init__.py
-│   └── bank_controller.py           # Main controller
-│
-├── database/                        # Data persistence
-│   ├── __init__.py
-│   └── db_manager.py                # SQLite database manager
-│
-├── tests/                           # Unit & integration tests
-│   ├── __init__.py
-│   └── test_banking_system.py       # 30+ tests
-│
-├── logs/                            # Application logs
-├── backups/                         # Database backups
-├── api/                             # Flask application
-└── middleware/                      # Authentication middleware
-├── setup.sh                         # Bash setup script
-├── requirements.txt                 # Dependencies (empty - stdlib only)
-├── .gitignore                       # Git ignore rules
-└── README.md                        # This file
-```
-
----
+- Python 3.13+
+- Node.js 16+
+- PostgreSQL 14+
+- npm o yarn
 
 
-
-## 🚀 Installation & Setup
-
-### 🔧 Requirements
-
-    Python 3.11+
-
-    Docker & Docker Compose
-
-    PostgreSQL (optional)
-    Terminal/Command Line
-    Git (for cloning)
-
-### Option 1: Automatic Setup (Linux/Mac)
+## 🚀 Inicio rápido
 
 ```bash
-# Clone the repository
-git clone https://github.com/AssistantIsa/banking-app-mvc.git
-cd banking-app-mvc
+# Clonar el repositorio (si aplica)
+git clone ...
+cd banking-app-mcv
 
-# Run setup script
-chmod +x setup.sh
-./setup.sh
-```
+# Iniciar con Docker
+chmod +x start.sh
+./start.sh
 
-### Option 2: Manual Setup (All platforms)
+🔐 Credenciales de prueba
 
+    Usuario: john.doe
+
+    Contraseña: hashed_password_456
+
+También puedes usar:
+
+    jane.smith / hashed_password_789
+
+    admin / hashed_password_123
+
+📦 Servicios
+
+    Frontend: http://localhost:3000
+
+    API: http://localhost:5000
+
+    PostgreSQL: puerto 5433 (usuario banking_user, db banking_db)
+
+
+
+### 2. Configurar Backend
 ```bash
-# Clone repository
-git clone https://github.com/AssistantIsa/banking-app-mvc.git
-cd banking-app-mvc
+cd backend
 
-# Create folder structure
-mkdir -p models views controllers database tests logs backups
+# Crear entorno virtual
+python -m venv venv
+source venv/bin/activate  # En Windows: venv\Scripts\activate
 
-# Create __init__.py files
-touch models/__init__.py views/__init__.py controllers/__init__.py
-touch database/__init__.py tests/__init__.py
+# Instalar dependencias
+pip install flask flask-cors psycopg2-binary pyjwt python-dotenv werkzeug
 
-# Copy all Python files from artifacts to their respective folders
-# (See artifacts provided by Claude)
+# Configurar variables de entorno
+cat > .env << EOL
+DB_HOST=localhost
+DB_NAME=banking_db
+DB_USER=postgres
+DB_PASSWORD=
+DB_PORT=5432
+SECRET_KEY=tu-clave-secreta-super-segura
+EOL
 ```
 
----
-
-## 🎮 Usage
-
-### Starting the Application
-
+### 3. Configurar PostgreSQL
 ```bash
-python main.py
-```
+# Acceder a PostgreSQL
+sudo -u postgres psql
 
-or
+# Crear base de datos
+CREATE DATABASE banking_db;
 
-```bash
-python3 main.py
-```
+# Conectarse
+\c banking_db
 
-### Demo Account (Pre-configured)
-
-```
-Username: demo
-Password: demo123
-Initial Account: #1000 with $1000.00
-```
-
-### Main Features Workflow
-
-#### 1️⃣ User Registration
-```
-Select option: 2
-Enter username: juan
-Enter password: mypassword
-Enter email: juan@example.com
-```
-
-#### 2️⃣ Login
-```
-Select option: 1
-Username: juan
-Password: mypassword
-```
-
-#### 3️⃣ Create Account
-```
-Select option: 2
-Account type: 1 (Savings)
-Initial deposit: 500
-```
-
-#### 4️⃣ Deposit Money
-```
-Select option: 3
-Account number: 1001
-Amount: 200
-```
-
-#### 5️⃣ Transfer Money
-```
-Select option: 5
-From account: 1001
-To account: 1000
-Amount: 100
-```
-
-#### 6️⃣ View Transaction History
-```
-Select option: 6
-Account number: 1001
-```
-
----
-
-## 🧪 Testing
-
-### Run All Tests
-
-```bash
-python tests/test_banking_system.py
-```
-
-or
-
-```bash
-python -m unittest discover tests
-```
-
-### Test Coverage
-
-- ✅ **User Tests** (6 tests)
-  - User creation
-  - Password hashing & verification
-  - Account management
-
-- ✅ **Account Tests** (11 tests)
-  - Account creation
-  - Deposits & withdrawals
-  - Balance validation
-  - Insufficient funds handling
-
-- ✅ **Transaction Tests** (3 tests)
-  - Transaction creation
-  - ID generation
-  - Transaction types
-
-- ✅ **Database Tests** (11 tests)
-  - CRUD operations
-  - Data persistence
-  - Query operations
-  - Backup functionality
-
-- ✅ **Integration Tests** (3 tests)
-  - Complete user workflows
-  - Account transfers
-  - Transaction history
-
-**Total: 34 tests**
-
-### Example Test Output
-
-```
-======================================================================
-  EXECUTING BANKING SYSTEM TESTS
-======================================================================
-
-test_user_creation (test_banking_system.TestUser) ... ok
-test_password_hashing (test_banking_system.TestUser) ... ok
-test_deposit_positive_amount (test_banking_system.TestAccount) ... ok
-...
-
-======================================================================
-  TEST SUMMARY
-======================================================================
-✅ Tests executed: 34
-✅ Tests passed: 34
-❌ Failures: 0
-❌ Errors: 0
-
-🎉 ALL TESTS PASSED SUCCESSFULLY!
-======================================================================
-```
-
----
-
-## 🏛️ MVC Pattern Implementation
-
-### **MODEL** (Data & Business Logic)
-Located in `models/`
-
-- **User**: Authentication, user data management
-- **Account**: Banking operations (deposit, withdraw, balance)
-- **Transaction**: Transaction records and tracking
-
-### **VIEW** (User Interface)
-Located in `views/`
-
-- **CLIView**: Command-line interface
-  - Menu displays
-  - User input handling
-  - Message formatting
-  - Data presentation
-
-### **CONTROLLER** (Application Logic)
-Located in `controllers/`
-
-- **BankController**: Coordinates between Model and View
-  - Processes user actions
-  - Executes business operations
-  - Manages application flow
-  - Database persistence
-
-### MVC Flow Diagram
-
-```
-┌─────────────┐
-│    USER     │
-│  (Terminal) │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────┐
-│   VIEW (CLI)    │ ◄──── Displays menus & data
-│   cli_view.py   │
-└──────┬──────────┘
-       │
-       ▼
-┌──────────────────┐
-│   CONTROLLER     │ ◄──── Business logic
-│bank_controller.py│
-└──────┬───────────┘
-       │
-       ▼
-┌──────────────────┐
-│     MODELS       │ ◄──── Data operations
-│ User, Account,   │
-│   Transaction    │
-└──────┬───────────┘
-       │
-       ▼
-┌──────────────────┐
-│    DATABASE      │ ◄──── Persistence (SQLite)
-│  db_manager.py   │
-└──────────────────┘
-```
-
----
-
-## 💾 Database Schema
-
-### Users Table
-```sql
+# Crear tablas
 CREATE TABLE users (
-    user_id INTEGER PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
+    user_id SERIAL PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(256) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-```
 
-### Accounts Table
-```sql
 CREATE TABLE accounts (
-    account_number INTEGER PRIMARY KEY,
+    account_number SERIAL PRIMARY KEY,
     owner_id INTEGER NOT NULL,
-    account_type TEXT NOT NULL,
-    balance REAL DEFAULT 0.0,
-    is_active INTEGER DEFAULT 1,
+    account_type VARCHAR(50) NOT NULL,
+    balance DECIMAL(15, 2) DEFAULT 0.0,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (owner_id) REFERENCES users(user_id)
+    FOREIGN KEY (owner_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
-```
 
-### Transactions Table
-```sql
 CREATE TABLE transactions (
-    transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    account_number INTEGER NOT NULL,
-    transaction_type TEXT NOT NULL,
-    amount REAL NOT NULL,
+    transaction_id SERIAL PRIMARY KEY,
+    from_account_id INTEGER,
+    to_account_id INTEGER,
+    amount DECIMAL(15, 2) NOT NULL,
+    transaction_type VARCHAR(50) NOT NULL,
     description TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status TEXT DEFAULT 'completed',
-    FOREIGN KEY (account_number) REFERENCES accounts(account_number)
+    FOREIGN KEY (from_account_id) REFERENCES accounts(account_number),
+    FOREIGN KEY (to_account_id) REFERENCES accounts(account_number)
 );
+
+\q
 ```
 
----
-
-## 💡 Technical Highlights
-
-### Pure Python Implementation
-✅ **Zero external dependencies** - uses only Python standard library  
-✅ SQLite (built-in)  
-✅ unittest (built-in)  
-✅ hashlib for encryption (built-in)  
-✅ datetime for timestamps (built-in)  
-
-### Security Features
-✅ **SHA-256 password hashing**  
-✅ No plaintext password storage  
-✅ Input validation  
-✅ SQL injection prevention (parameterized queries)  
-
-### Best Practices
-✅ **Clean Code** - readable, well-documented  
-✅ **DRY Principle** - no code repetition  
-✅ **SOLID Principles** - separation of concerns  
-✅ **Error Handling** - comprehensive exception handling  
-✅ **Documentation** - docstrings for all functions  
-
----
-
-## 🌐 REST API
-
-**NEW:** This project now includes a complete REST API!
-
-### Quick Start
-python -m api.app
-
-Server runs on: http://localhost:5000
-
-### Features
-- ✅ RESTful architecture (8 endpoints)
-- ✅ JWT token authentication
-- ✅ User registration and login
-- ✅ Complete banking operations
-- ✅ Transaction history
-- ✅ PostgreSQL integration
-- ✅ CORS enabled
-
-### API Documentation
-See [README_API.md](README_API.md) for complete API documentation.
-
-### Example
-# Register user
-curl -X POST http://localhost:5000/api/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"user","password":"pass","email":"user@test.com"}'
-
-# Login and get JWT token
-curl -X POST http://localhost:5000/api/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"user","password":"pass"}'
-
-**Technologies:** Flask, JWT, PostgreSQL, REST API, CORS
-
----
----
-
-## 🌐 REST API
-
-**✨ NEW FEATURE:** Complete REST API with JWT Authentication
-
-### Quick Start
+### 4. Configurar Frontend
 ```bash
-python -m api.app
+cd ../frontend
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cat > .env << EOL
+REACT_APP_API_URL=http://localhost:7777
+EOL
 ```
-Server: http://localhost:5000
 
-### Features
-- ✅ 8 RESTful endpoints
-- ✅ JWT token authentication
-- ✅ User registration & login
-- ✅ Banking operations (deposit, withdraw, transfer)
-- ✅ Transaction history
-- ✅ PostgreSQL integration
-- ✅ CORS enabled
+# Ver logs
+docker-compose logs -f api
+docker-compose logs -f frontend
 
-### Documentation
-📚 **[Complete API Documentation](README_API.md)**
+# Detener
+docker-compose down
 
-### Example Usage
+# Reconstruir
+docker-compose up -d --build
+
+## 🚀 Ejecutar la Aplicación
+
+### Backend (Terminal 1)
 ```bash
-# Register
-curl -X POST http://localhost:5000/api/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"user","password":"pass","email":"user@test.com"}'
+cd backend
+source venv/bin/activate
+python app.py
+```
 
+Servidor corriendo en: `http://localhost:7777`
+
+### Frontend (Terminal 2)
+```bash
+cd frontend
+npm start
+```
+
+Aplicación disponible en: `http://localhost:3001`
+
+## 👤 Usuarios de Prueba
+
+Usa la ruta `/api/register` para crear usuarios, o utiliza estos de prueba:
+```
+Usuario: john
+Password: password123
+
+Usuario: admin
+Password: admin123
+```
+
+## 📡 API Endpoints
+
+### Públicos
+- `POST /api/login` - Autenticación de usuario
+- `POST /api/register` - Registro de nuevo usuario
+- `GET /api/health` - Estado del servidor
+
+### Protegidos (requieren JWT)
+- `GET /api/accounts` - Obtener cuentas del usuario
+- `POST /api/transfer` - Realizar transferencia
+- `GET /api/transactions` - Historial de transacciones
+
+### Ejemplo de uso
+```bash
 # Login
-curl -X POST http://localhost:5000/api/login \
+curl -X POST http://localhost:7777/api/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"user","password":"pass"}'
+  -d '{"username": "john", "password": "password123"}'
 
-# Use JWT token in requests
-curl http://localhost:5000/api/accounts \
-  -H "Authorization: Bearer YOUR_TOKEN"
+# Respuesta
+{
+  "token": "eyJhbGc...",
+  "user": {
+    "user_id": 1,
+    "username": "john",
+    "email": "john@email.com"
+  }
+}
 ```
 
-**Technologies:** Flask, JWT, PostgreSQL, REST API, CORS
 
 ---
 
-## 🔄 Future Enhancements (Now Optional)
+## ✅ **Instrucciones finales**
 
-### Phase 2 - Frontend (Planned)
-- [ ] React frontend with modern UI
-- [ ] Real-time updates
-- [ ] Dashboard with charts
+1. **Copia cada archivo** en su ubicación correcta según la estructura mostrada.
+2. **Asegúrate de que los usuarios en la base de datos existan** (ya deberían estar si ejecutaste el script SQL anterior). Si no, puedes insertarlos manualmente:
 
-### Phase 3 - Advanced (Planned)
-- [ ] Microservices architecture
-- [ ] Kubernetes deployment
-- [ ] CI/CD pipeline
+```bash
+docker-compose exec postgres psql -U banking_user -d banking_db -c "
+INSERT INTO users (username, email, password_hash, first_name, last_name, is_admin) VALUES
+('john.doe', 'john@example.com', 'hashed_password_456', 'John', 'Doe', false),
+('jane.smith', 'jane@example.com', 'hashed_password_789', 'Jane', 'Smith', false),
+('admin', 'admin@bank.com', 'hashed_password_123', 'Admin', 'User', true)
+ON CONFLICT (username) DO NOTHING;
+"
 
 
+## 🔒 Seguridad Implementada
 
-## 📚 Learning Outcomes
+- ✅ Passwords hasheados con Werkzeug (scrypt)
+- ✅ Autenticación mediante JWT
+- ✅ Validación de tokens en rutas protegidas
+- ✅ CORS configurado
+- ✅ Prevención de SQL Injection (prepared statements)
+- ✅ Validación de saldos y límites
+- ✅ Transacciones atómicas en base de datos
 
-This project demonstrates proficiency in:
+## 📊 Límites y Validaciones
 
-✅ **Python Programming**  
-✅ **Object-Oriented Programming (OOP)**  
-✅ **MVC Architectural Pattern**  
-✅ **Database Design & SQL**  
-✅ **Test-Driven Development (TDD)**  
-✅ **Error Handling & Validation**  
-✅ **Code Organization & Structure**  
-✅ **Documentation & README Writing**  
-✅ **Git & Version Control**  
-✅ **Bash Scripting**  
+- Transferencia máxima: $10,000
+- Transferencia mínima: $0.01
+- No se permite transferir a la misma cuenta
+- Validación de saldo suficiente
+- Validación de existencia de cuentas
+
+## 🗂️ Estructura del Proyecto
+```
+banking-system-mvc/
+├── backend/
+│   ├── app.py              # API Flask principal
+│   ├── .env                # Variables de entorno
+│   ├── requirements.txt    # Dependencias Python
+│   └── venv/              # Entorno virtual
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/    # Componentes React
+│   │   ├── services/      # API calls
+│   │   ├── utils/         # Helpers (auth, etc.)
+│   │   └── App.js         # Componente principal
+│   ├── .env               # Variables de entorno
+│   └── package.json       # Dependencias Node
+│
+└── README.md              # Este archivo
+```
+
+## 🧪 Testing
+```bash
+# Verificar salud del backend
+curl http://localhost:7777/api/health
+
+# Test de login
+curl -X POST http://localhost:7777/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john", "password": "password123"}'
+```
+
+## 🎯 Roadmap Futuro
+
+- [ ] Gráficos de gastos (Chart.js)
+- [ ] Exportación a PDF/Excel
+- [ ] Notificaciones en tiempo real
+- [ ] Doble factor de autenticación (2FA)
+- [ ] Panel de administración
+- [ ] API de pagos externos
+- [ ] Aplicación móvil (React Native)
+
+
+**Author:** Juan Sánchez  
+**GitHub:** [github.com/AssistantIsa](https://github.com/AssistantIsa)  
+**LinkedIn:** [linkedin.com/in/juansanchezdev](https://linkedin.com/in/juansanchezdev)  
+**Freelancer:**[freelancer.com/u/AssistantIsa](https://www.freelancer.com/u/AssistantIsa)
+**Email:** usanaconisa@gmail.com
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+
+## 🙏 Agradecimientos
+
+- Flask Documentation
+- React Documentation
+- PostgreSQL Community
+- Stack Overflow Community
 
 ---
 
-## 🎯 For Recruiters & Hiring Managers
-
-This project showcases:
-
-- ✅ **Professional code organization** following industry standards
-- ✅ **Clean architecture** with clear separation of concerns
-- ✅ **Database expertise** with SQLite and SQL
-- ✅ **Testing skills** with comprehensive test coverage
-- ✅ **Security awareness** with password encryption
-- ✅ **Documentation skills** with detailed README
-- ✅ **Problem-solving** with real-world banking scenarios
-
-**Technologies:** Python 3.8+, SQLite, unittest, OOP, MVC Pattern, Git, Bash
-
-**Time to Complete:** ~3-5 days (demonstrates efficiency)
-
-**Code Quality:** Production-ready, maintainable, scalable
-
----
-
-## 📝 License
-
-This project is open source and available under the MIT License.
-
----
-
-## 👨‍💻 Author
-
-**Juan Sánchez**  
-Junior Python Developer | IT Support Specialist
-
-📧 Email: usanaconisa@gmail.com  
-🔗 LinkedIn: [linkedin.com/in/juansanchezdev](https://linkedin.com/in/juansanchezdev)  
-💻 GitHub: [github.com/AssistantIsa](https://github.com/AssistantIsa)  
-📍 Location: Cologne, Germany | Open to Remote Work
-
-**Certifications:**
-- IBM Python for Data Science, AI & Development
-- Microsoft Office Specialist (Excel, Word)
-
----
-
-## 🙏 Acknowledgments
-
-- Built as part of a personal portfolio project
-- Demonstrates skills learned from IBM/Coursera Python certification
-- Created to showcase MVC pattern implementation in Python
-
----
-
-## ⭐ Support This Project
-
-If you find this project useful:
-- ⭐ Star this repository
-- 🐛 Report issues
-- 💡 Suggest improvements
-- 🔀 Fork and contribute
-
----
-
-**Last Updated:** January 2026  
-**Version:** 1.0.0  
-**Status:** ✅ Production Ready
-
----|
+⭐️ Si te gustó este proyecto, dale una estrella en GitHub!

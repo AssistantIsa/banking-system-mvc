@@ -5,9 +5,10 @@ from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, or_, desc
 from database.db_manager import db_session
+from models.transaction import Transaction
+from database.db_manager import db_session
 from models.user import User
 from models.account import Account
-from models.transaction import Transaction
 import logging
 
 logger = logging.getLogger(__name__)
@@ -295,16 +296,9 @@ class BankController:
         """Obtener todas las cuentas de un usuario"""
         try:
             with db_session() as session:
-                accounts = session.query(Account).filter(
-                    Account.user_id == uuid.UUID(user_id)
-                ).all()
-                
-                return {
-                    "user_id": user_id,
-                    "accounts": [acc.to_dict() for acc in accounts],
-                    "total_balance": float(sum(acc.balance for acc in accounts))
-                }, 200
-                
+                accounts = session.query(Account).filter(Account.user_id == user_id).all()
+                return [acc.to_dict() for acc in accounts]
+
         except (ValueError, SQLAlchemyError) as e:
             logger.error(f"Error getting user accounts: {e}")
             return {"error": "Invalid input or database error"}, 400
