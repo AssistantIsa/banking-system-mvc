@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U banking_user"]
+      test: ["CMD-SHELL", "pg_isready -U banking_user -d banking_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,26 +21,28 @@ services:
   api:
     build: ./backend
     container_name: banking-api
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://banking_user:banking_password_2024@postgres:5432/banking_db
+      FLASK_ENV: development
+      FLASK_DEBUG: "true"
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://banking_user:banking_password_2024@postgres:5432/banking_db
-      JWT_SECRET_KEY: super-secret-change-in-production
-      FLASK_ENV: development
-    ports:
-      - "5000:5000"
     volumes:
       - ./backend:/app
     networks:
       - banking-network
-    command: python main.py
+    command: python app.py
 
   frontend:
     build: ./frontend
     container_name: banking-frontend
     ports:
       - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:5000
     depends_on:
       - api
     volumes:
@@ -50,9 +52,9 @@ services:
       - banking-network
     command: npm start
 
+volumes:
+  postgres_data:
+
 networks:
   banking-network:
     driver: bridge
-
-volumes:
-  postgres_data:

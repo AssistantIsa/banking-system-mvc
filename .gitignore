@@ -121,3 +121,34 @@ __pycache__/
 
 # VS Code
 .vscode/
+
+cd ~/Documents/banking-app-mcv
+nano .gitignore
+```
+
+Pega esto:
+```
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.env
+
+# Docker
+postgres_data/
+
+# Sistema
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Archivos temporales
+*.backup
+*.old
+temp_backup/

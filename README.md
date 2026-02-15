@@ -6,6 +6,7 @@ Sistema bancario completo desarrollado con arquitectura MVC, que permite gestió
 ![Python](https://img.shields.io/badge/Python-3.13-blue)
 ![React](https://img.shields.io/badge/React-18-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14-blue)
+![Docker](https://img.shields.io/badge/Docker-Compose-blue)
 
 ## 📸 Screenshots
 
@@ -18,8 +19,8 @@ Sistema bancario completo desarrollado con arquitectura MVC, que permite gestió
 ### Transferencias
 ![Transferencias](./screenshots/transfer.png)
 
-### Historial
-![Historial](./screenshots/history.png)
+### Historial de Transacciones
+![Historial](./docs/screenshots/history.png)
 
 ## 🚀 Características
 
@@ -31,6 +32,7 @@ Sistema bancario completo desarrollado con arquitectura MVC, que permite gestió
 - ✅ **Validación de saldos** en tiempo real
 - ✅ **Interfaz responsive** con React
 - ✅ **Base de datos relacional** PostgreSQL
+- ✅ **Dockerizado** para fácil deployment
 
 ## 🛠️ Stack Tecnológico
 
@@ -60,151 +62,50 @@ Sistema bancario completo desarrollado con arquitectura MVC, que permite gestió
 - npm o yarn
 
 
-## 🚀 Inicio rápido
+## 🔧 Instalación y Configuración
 
+### 1. Clonar el repositorio
 ```bash
-# Clonar el repositorio (si aplica)
-git clone ...
-cd banking-app-mcv
+git clone https://github.com/TU_USUARIO/banking-system-mvc.git
+cd banking-system-mvc
+```
 
-# Iniciar con Docker
-chmod +x start.sh
-./start.sh
+### 2. Configurar variables de entorno
 
-🔐 Credenciales de prueba
-
-    Usuario: john.doe
-
-    Contraseña: hashed_password_456
-
-También puedes usar:
-
-    jane.smith / hashed_password_789
-
-    admin / hashed_password_123
-
-📦 Servicios
-
-    Frontend: http://localhost:3000
-
-    API: http://localhost:5000
-
-    PostgreSQL: puerto 5433 (usuario banking_user, db banking_db)
-
-
-
-### 2. Configurar Backend
+**Backend (.env):**
 ```bash
 cd backend
-
-# Crear entorno virtual
-python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
-
-# Instalar dependencias
-pip install flask flask-cors psycopg2-binary pyjwt python-dotenv werkzeug
-
-# Configurar variables de entorno
 cat > .env << EOL
-DB_HOST=localhost
+DB_HOST=postgres
 DB_NAME=banking_db
-DB_USER=postgres
-DB_PASSWORD=
+DB_USER=banking_user
+DB_PASSWORD=banking_password_2024
 DB_PORT=5432
 SECRET_KEY=tu-clave-secreta-super-segura
 EOL
 ```
 
-### 3. Configurar PostgreSQL
-```bash
-# Acceder a PostgreSQL
-sudo -u postgres psql
-
-# Crear base de datos
-CREATE DATABASE banking_db;
-
-# Conectarse
-\c banking_db
-
-# Crear tablas
-CREATE TABLE users (
-    user_id SERIAL PRIMARY KEY,
-    username VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(256) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE accounts (
-    account_number SERIAL PRIMARY KEY,
-    owner_id INTEGER NOT NULL,
-    account_type VARCHAR(50) NOT NULL,
-    balance DECIMAL(15, 2) DEFAULT 0.0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (owner_id) REFERENCES users(user_id) ON DELETE CASCADE
-);
-
-CREATE TABLE transactions (
-    transaction_id SERIAL PRIMARY KEY,
-    from_account_id INTEGER,
-    to_account_id INTEGER,
-    amount DECIMAL(15, 2) NOT NULL,
-    transaction_type VARCHAR(50) NOT NULL,
-    description TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (from_account_id) REFERENCES accounts(account_number),
-    FOREIGN KEY (to_account_id) REFERENCES accounts(account_number)
-);
-
-\q
-```
-
-### 4. Configurar Frontend
+**Frontend (.env):**
 ```bash
 cd ../frontend
-
-# Instalar dependencias
-npm install
-
-# Configurar variables de entorno
 cat > .env << EOL
-REACT_APP_API_URL=http://localhost:7777
+REACT_APP_API_URL=http://localhost:5000
 EOL
 ```
 
-# Ver logs
-docker-compose logs -f api
-docker-compose logs -f frontend
-
-# Detener
-docker-compose down
-
-# Reconstruir
-docker-compose up -d --build
-
-## 🚀 Ejecutar la Aplicación
-
-### Backend (Terminal 1)
+### 3. Levantar con Docker
 ```bash
-cd backend
-source venv/bin/activate
-python app.py
+cd ..
+docker-compose up -d
 ```
 
-Servidor corriendo en: `http://localhost:7777`
+### 4. Acceder a la aplicación
 
-### Frontend (Terminal 2)
-```bash
-cd frontend
-npm start
-```
-
-Aplicación disponible en: `http://localhost:3001`
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:5000
+- **PostgreSQL:** localhost:5433
 
 ## 👤 Usuarios de Prueba
-
-Usa la ruta `/api/register` para crear usuarios, o utiliza estos de prueba:
 ```
 Usuario: john
 Password: password123
@@ -228,12 +129,13 @@ Password: admin123
 ### Ejemplo de uso
 ```bash
 # Login
-curl -X POST http://localhost:7777/api/login \
+curl -X POST http://localhost:5000/api/login \
   -H "Content-Type: application/json" \
   -d '{"username": "john", "password": "password123"}'
 
 # Respuesta
 {
+  "message": "Login exitoso",
   "token": "eyJhbGc...",
   "user": {
     "user_id": 1,
@@ -241,10 +143,48 @@ curl -X POST http://localhost:7777/api/login \
     "email": "john@email.com"
   }
 }
-```
+
+## 🔒 Seguridad Implementada
+
+- ✅ Passwords hasheados con Werkzeug (algoritmo scrypt)
+- ✅ Autenticación mediante JWT con expiración (24h)
+- ✅ Validación de tokens en todas las rutas protegidas
+- ✅ CORS configurado para desarrollo
+- ✅ Prevención de SQL Injection (prepared statements)
+- ✅ Validación de saldos y límites de transferencia
+- ✅ Transacciones atómicas en base de datos
+
+## 📊 Límites y Validaciones
+
+- **Transferencia máxima:** $10,000 por transacción
+- **Transferencia mínima:** $0.01
+- **Validaciones:**
+  - No transferir a la misma cuenta
+  - Saldo suficiente obligatorio
+  - Existencia de cuentas origen y destino
+  - Cuentas activas
+
+## 🔒 Seguridad Implementada
+
+- ✅ Passwords hasheados con Werkzeug (algoritmo scrypt)
+- ✅ Autenticación mediante JWT con expiración (24h)
+- ✅ Validación de tokens en todas las rutas protegidas
+- ✅ CORS configurado para desarrollo
+- ✅ Prevención de SQL Injection (prepared statements)
+- ✅ Validación de saldos y límites de transferencia
+- ✅ Transacciones atómicas en base de datos
+
+## 📊 Límites y Validaciones
+
+- **Transferencia máxima:** $10,000 por transacción
+- **Transferencia mínima:** $0.01
+- **Validaciones:**
+  - No transferir a la misma cuenta
+  - Saldo suficiente obligatorio
+  - Existencia de cuentas origen y destino
+  - Cuentas activas
 
 
----
 
 ## ✅ **Instrucciones finales**
 
@@ -280,47 +220,77 @@ ON CONFLICT (username) DO NOTHING;
 - Validación de existencia de cuentas
 
 ## 🗂️ Estructura del Proyecto
-```
-banking-system-mvc/
-├── backend/
-│   ├── app.py              # API Flask principal
-│   ├── .env                # Variables de entorno
-│   ├── requirements.txt    # Dependencias Python
-│   └── venv/              # Entorno virtual
-│
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── components/    # Componentes React
-│   │   ├── services/      # API calls
-│   │   ├── utils/         # Helpers (auth, etc.)
-│   │   └── App.js         # Componente principal
-│   ├── .env               # Variables de entorno
-│   └── package.json       # Dependencias Node
-│
+
 └── README.md              # Este archivo
+```
+
+## 🐳 Comandos Docker Útiles
+```bash
+# Ver logs
+docker-compose logs -f
+
+# Reiniciar servicios
+docker-compose restart
+
+# Detener servicios
+docker-compose down
+
+# Reconstruir imágenes
+docker-compose up --build -d
+
+# Acceder a PostgreSQL
+docker-compose exec postgres psql -U banking_user -d banking_db
+
+# Ver estado de contenedores
+docker-compose ps
 ```
 
 ## 🧪 Testing
 ```bash
 # Verificar salud del backend
-curl http://localhost:7777/api/health
+curl http://localhost:5000/api/health
 
 # Test de login
-curl -X POST http://localhost:7777/api/login \
+curl -X POST http://localhost:5000/api/login \
   -H "Content-Type: application/json" \
   -d '{"username": "john", "password": "password123"}'
 ```
 
 ## 🎯 Roadmap Futuro
 
-- [ ] Gráficos de gastos (Chart.js)
+- [ ] Gráficos de gastos con Chart.js
 - [ ] Exportación a PDF/Excel
-- [ ] Notificaciones en tiempo real
-- [ ] Doble factor de autenticación (2FA)
+- [ ] Notificaciones en tiempo real (WebSockets)
+- [ ] Autenticación de doble factor (2FA)
 - [ ] Panel de administración
-- [ ] API de pagos externos
-- [ ] Aplicación móvil (React Native)
+- [ ] Integración con APIs de pagos externos
+- [ ] Aplicación móvil con React Native
+
+## 🗄️ Modelo de Base de Datos
+```sql
+users
+├── user_id (PK)
+├── username (UNIQUE)
+├── password_hash
+├── email (UNIQUE)
+└── created_at
+
+accounts
+├── account_number (PK)
+├── owner_id (FK → users)
+├── account_type
+├── balance
+├── is_active
+└── created_at
+
+transactions
+├── transaction_id (PK)
+├── from_account_id (FK → accounts)
+├── to_account_id (FK → accounts)
+├── amount
+├── transaction_type
+├── description
+└── timestamp
 
 
 **Author:** Juan Sánchez  
@@ -340,6 +310,12 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 - PostgreSQL Community
 - Stack Overflow Community
 
+## 📞 Contacto
+
+Si tienes preguntas o sugerencias, no dudes en contactarme o abrir un issue en GitHub.
+
 ---
 
-⭐️ Si te gustó este proyecto, dale una estrella en GitHub!
+⭐️ Si te gustó este proyecto, ¡dale una estrella en GitHub!
+
+**Desarrollado con ❤️ usando Flask, React y PostgreSQL**
