@@ -66,7 +66,7 @@ Sistema bancario completo desarrollado con arquitectura MVC, que permite gestió
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/TU_USUARIO/banking-system-mvc.git
+git clone https://github.com/AssistantIsa/banking-system-mvc.git
 cd banking-system-mvc
 ```
 
